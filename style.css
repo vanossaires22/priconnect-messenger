@@ -1885,3 +1885,75 @@ input:checked + .slider:before {
     color: var(--text-secondary);
     font-size: 12px;
 }
+/* Мини-профиль в сайдбаре */
+.user-profile-mini {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+}
+
+.user-profile-mini:hover {
+    background: var(--hover-color);
+}
+
+.user-info-mini {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.user-status {
+    font-size: 12px;
+    color: var(--success-color);
+}
+
+/* Профиль в модальном окне */
+.profile-avatar-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    justify-content: center;
+}
+
+/* Информация о приложении */
+.app-info {
+    background: var(--bg-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-value {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.data-settings {
+    background: var(--bg-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+}
