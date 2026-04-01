@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlassMessenger PRO</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Уведомления -->
+    <div class="notifications-container" id="notificationsContainer"></div>
+
+    <!-- Эмодзи пикер -->
+    <div class="emoji-picker" id="emojiPicker">
+        <div class="emoji-header">
+            <span>Эмодзи</span>
+            <button class="close-emoji" id="closeEmoji"><i class="ri-close-line"></i></button>
+        </div>
+        <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+
+    <!-- Модальное окно профиля -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Профиль</h2>
+                <button class="modal-close" id="closeProfile"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-avatar-section">
+                    <img src="https://i.pravatar.cc/150?img=68" alt="Avatar" id="profileAvatarPreview">
+                    <label for="avatarUpload" class="avatar-upload-btn">
+                        <i class="ri-camera-line"></i>
+                    </label>
+                    <input type="file" id="avatarUpload" accept="image/*" hidden>
+                </div>
+                <div class="form-group">
+                    <label>Никнейм</label>
+                    <input type="text" id="profileNickname" placeholder="Ваш никнейм">
+                </div>
+                <div class="form-group">
+                    <label>Статус</label>
+                    <input type="text" id="profileStatus" placeholder="О чём думаете...">
+                </div>
+                <button class="btn-primary" id="saveProfile">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно нового чата -->
+    <div class="modal" id="newChatModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Новый чат</h2>
+                <button class="modal-close" id="closeNewChat"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Название чата</label>
+                    <input type="text" id="newChatName" placeholder="Введите название">
+                </div>
+                <div class="form-group">
+                    <label>Участники</label>
+                    <div class="contacts-select" id="contactsSelect"></div>
+                </div>
+                <button class="btn-primary" id="createChat">Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления контакта -->
+    <div class="modal" id="addContactModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Добавить контакт</h2>
+                <button class="modal-close" id="closeAddContact"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Имя</label>
+                    <input type="text" id="contactName" placeholder="Имя контакта">
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="contactUsername" placeholder="@username">
+                </div>
+                <button class="btn-primary" id="addContact">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования сообщения -->
+    <div class="modal" id="editMessageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Редактировать сообщение</h2>
+                <button class="modal-close" id="closeEditMessage"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <textarea id="editMessageText" rows="4" placeholder="Текст сообщения"></textarea>
+                </div>
+                <button class="btn-primary" id="saveEditMessage">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно пересылки -->
+    <div class="modal" id="forwardModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Переслать</h2>
+                <button class="modal-close" id="closeForward"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="contacts-select" id="forwardContacts"></div>
+                <button class="btn-primary" id="confirmForward">Переслать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно настроек -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Настройки</h2>
+                <button class="modal-close" id="closeSettings"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body settings-body">
+                <div class="setting-item">
+                    <span>Тема оформления</span>
+                    <select id="themeSelect">
+                        <option value="dark">Тёмная</option>
+                        <option value="light">Светлая</option>
+                        <option value="purple">Фиолетовая</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <span>Уведомления</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="notificationsToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>Ночной режим (авто)</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="nightModeToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>Звуки</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="soundsToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно избранного -->
+    <div class="modal" id="starredModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Избранные сообщения</h2>
+                <button class="modal-close" id="closeStarred"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="starred-list" id="starredList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно экспорта -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Экспорт чата</h2>
+                <button class="modal-close" id="closeExport"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <p>Выберите формат экспорта:</p>
+                <div class="export-options">
+                    <button class="btn-option" data-format="txt">.TXT</button>
+                    <button class="btn-option" data-format="json">.JSON</button>
+                    <button class="btn-option" data-format="html">.HTML</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Контекстное меню сообщения -->
+    <div class="context-menu" id="messageContextMenu">
+        <button class="context-item" data-action="reply"><i class="ri-reply-line"></i> Ответить</button>
+        <button class="context-item" data-action="edit"><i class="ri-edit-line"></i> Редактировать</button>
+        <button class="context-item" data-action="forward"><i class="ri-forward-line"></i> Переслать</button>
+        <button class="context-item" data-action="star"><i class="ri-star-line"></i> В избранное</button>
+        <button class="context-item" data-action="delete"><i class="ri-delete-bin-line"></i> Удалить</button>
+    </div>
+
+    <!-- Контекстное меню чата -->
+    <div class="context-menu" id="chatContextMenu">
+        <button class="context-item" data-action="pin"><i class="ri-pushpin-line"></i> Закрепить</button>
+        <button class="context-item" data-action="archive"><i class="ri-archive-line"></i> Архивировать</button>
+        <button class="context-item" data-action="mute"><i class="ri-volume-mute-line"></i> Отключить звук</button>
+        <button class="context-item" data-action="export"><i class="ri-download-line"></i> Экспорт</button>
+        <button class="context-item" data-action="delete"><i class="ri-delete-bin-line"></i> Удалить чат</button>
+    </div>
+
+    <div class="app-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="user-profile" id="userProfileBtn">
+                    <img src="https://i.pravatar.cc/150?img=68" alt="User" class="user-avatar" id="userAvatar">
+                    <div class="user-info">
+                        <span class="user-name" id="userName">Пользователь</span>
+                        <span class="user-status" id="userStatusText">Онлайн</span>
+                    </div>
+                </div>
+                <div class="header-actions-small">
+                    <button class="icon-btn" id="settingsBtn" title="Настройки"><i class="ri-settings-4-line"></i></button>
+                    <button class="icon-btn" id="newChatBtn" title="Новый чат"><i class="ri-add-line"></i></button>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <i class="ri-search-line"></i>
+                <input type="text" id="searchInput" placeholder="Поиск...">
+                <button class="search-filter" id="searchFilter"><i class="ri-filter-line"></i></button>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="all">Все</button>
+                <button class="tab" data-tab="unread">Непрочитанные</button>
+                <button class="tab" data-tab="pinned">Закрепленные</button>
+                <button class="tab" data-tab="archived">Архив</button>
+            </div>
+
+            <div class="contacts-list" id="contactsList"></div>
+
+            <div class="sidebar-footer">
+                <button class="footer-btn" id="addContactBtn"><i class="ri-user-add-line"></i> Добавить контакт</button>
+                <button class="footer-btn" id="starredBtn"><i class="ri-star-line"></i> Избранное</button>
+            </div>
+        </aside>
+
+        <!-- Область чата -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <button class="mobile-toggle" id="openSidebar"><i class="ri-menu-line"></i></button>
+                <div class="current-chat-info">
+                    <img src="" alt="Avatar" class="avatar" id="currentAvatar">
+                    <div class="chat-details">
+                        <h3 id="currentChatName">Выберите чат</h3>
+                        <span class="status" id="currentStatus">Офлайн</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" id="searchInChat" title="Поиск в чате"><i class="ri-search-line"></i></button>
+                    <button class="icon-btn" id="callBtn" title="Звонок"><i class="ri-phone-line"></i></button>
+                    <button class="icon-btn" id="videoBtn" title="Видео"><i class="ri-vidicon-line"></i></button>
+                    <button class="icon-btn" id="chatMenuBtn" title="Меню"><i class="ri-more-2-fill"></i></button>
+                </div>
+            </header>
+
+            <!-- Поиск в чате -->
+            <div class="chat-search-bar" id="chatSearchBar">
+                <input type="text" id="chatSearchInput" placeholder="Поиск сообщений...">
+                <span class="search-count" id="searchCount"></span>
+                <button class="search-nav" id="searchPrev"><i class="ri-arrow-up-s-line"></i></button>
+                <button class="search-nav" id="searchNext"><i class="ri-arrow-down-s-line"></i></button>
+                <button class="search-close" id="closeChatSearch"><i class="ri-close-line"></i></button>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <i class="ri-chat-smile-2-line"></i>
+                    <p>Выберите контакт, чтобы начать общение</p>
+                </div>
+            </div>
+
+            <!-- Индикатор записи голоса -->
+            <div class="voice-recording" id="voiceRecording">
+                <div class="recording-wave">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span class="recording-time" id="recordingTime">00:00</span>
+                <button class="stop-recording" id="stopRecording"><i class="ri-stop-circle-line"></i></button>
+            </div>
+
+            <div class="input-area">
+                <button class="icon-btn attachment-btn" id="attachBtn"><i class="ri-add-circle-line"></i></button>
+                <button class="icon-btn emoji-btn" id="emojiBtn"><i class="ri-emotion-line"></i></button>
+                <button class="icon-btn voice-btn" id="voiceBtn"><i class="ri-mic-line"></i></button>
+                <input type="text" id="messageInput" placeholder="Напишите сообщение..." autocomplete="off">
+                <button class="icon-btn send-btn" id="sendBtn"><i class="ri-send-plane-fill"></i></button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Аудио для записи -->
+    <audio id="audioPlayback" controls style="display:none;"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
