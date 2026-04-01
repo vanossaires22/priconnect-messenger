@@ -3,129 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Priconnecte - Безопасный мессенджер нового поколения">
+    <meta name="description" content="Priconnecte - Быстрый мессенджер без регистрации">
     <meta name="theme-color" content="#3390ec">
-    <title>Priconnecte</title>
+    <title>Priconnecte | Мессенджер</title>
     
-    <!-- Иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Стили -->
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Socket.IO Client -->
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
 
-    <!-- ==================== ЭКРАН ВХОДА/РЕГИСТРАЦИИ ==================== -->
-    <div id="auth-screen" class="screen active">
-        <div class="auth-container">
-            <div class="auth-logo">
-                <div class="logo-icon">
-                    <i class="fas fa-paper-plane"></i>
-                </div>
-                <h1>Priconnecte</h1>
-                <p class="auth-tagline">Быстро. Безопасно. Надежно.</p>
-            </div>
-            
-            <!-- Форма входа -->
-            <div class="auth-card" id="login-form">
-                <h2>Вход в аккаунт</h2>
-                <p class="auth-desc">Введите свои данные для входа</p>
-                
-                <div class="input-group">
-                    <label for="login-email">Email</label>
-                    <input type="email" id="login-email" class="input-field" placeholder="example@mail.com">
-                </div>
-
-                <div class="input-group">
-                    <label for="login-password">Пароль</label>
-                    <input type="password" id="login-password" class="input-field" placeholder="Введите пароль">
-                </div>
-
-                <button class="btn-primary full-width" id="login-btn" onclick="login()">
-                    <span class="btn-text">Войти</span>
-                    <span class="btn-loader hidden"><i class="fas fa-circle-notch fa-spin"></i></span>
-                </button>
-                
-                <div class="auth-footer">
-                    <p>Нет аккаунта? <a href="#" onclick="showRegisterForm()">Зарегистрироваться</a></p>
-                    <p><a href="#" onclick="showRecoverForm()">Забыли пароль?</a></p>
-                </div>
-            </div>
-            
-            <!-- Форма регистрации -->
-            <div class="auth-card hidden" id="register-form">
-                <button class="btn-back" onclick="showLoginForm()"><i class="fas fa-arrow-left"></i></button>
-                <h2>Регистрация</h2>
-                <p class="auth-desc">Создайте новый аккаунт бесплатно</p>
-                
-                <div class="input-group">
-                    <label for="register-name">Ваше имя</label>
-                    <input type="text" id="register-name" class="input-field" placeholder="Как к вам обращаться?">
-                </div>
-
-                <div class="input-group">
-                    <label for="register-email">Email</label>
-                    <input type="email" id="register-email" class="input-field" placeholder="example@mail.com">
-                </div>
-
-                <div class="input-group">
-                    <label for="register-password">Пароль</label>
-                    <input type="password" id="register-password" class="input-field" placeholder="Минимум 6 символов" oninput="checkPasswordStrength(this.value)">
-                    <div class="password-strength" id="register-password-strength">
-                        <div class="strength-bar"></div>
-                        <span class="strength-text">Сложность пароля</span>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label for="register-confirm">Подтвердите пароль</label>
-                    <input type="password" id="register-confirm" class="input-field" placeholder="Повторите пароль">
-                </div>
-
-                <div class="checkbox-group">
-                    <input type="checkbox" id="terms-agree">
-                    <label for="terms-agree">Я принимаю <a href="#">Условия использования</a> и <a href="#">Политику конфиденциальности</a></label>
-                </div>
-
-                <button class="btn-primary full-width" id="register-btn" onclick="register()">
-                    <span class="btn-text">Создать аккаунт</span>
-                    <span class="btn-loader hidden"><i class="fas fa-circle-notch fa-spin"></i></span>
-                </button>
-                
-                <div class="auth-footer">
-                    <p>Уже есть аккаунт? <a href="#" onclick="showLoginForm()">Войти</a></p>
-                </div>
-            </div>
-
-            <!-- Форма восстановления пароля -->
-            <div class="auth-card hidden" id="recover-form">
-                <button class="btn-back" onclick="showLoginForm()"><i class="fas fa-arrow-left"></i></button>
-                <h2>Восстановление пароля</h2>
-                <p class="auth-desc">Введите email для получения инструкции по сбросу пароля</p>
-                
-                <div class="input-group">
-                    <label for="recover-email">Email</label>
-                    <input type="email" id="recover-email" class="input-field" placeholder="example@mail.com">
-                </div>
-
-                <button class="btn-primary full-width" id="recover-btn" onclick="recoverPassword()">
-                    <span class="btn-text">Отправить инструкцию</span>
-                    <span class="btn-loader hidden"><i class="fas fa-circle-notch fa-spin"></i></span>
-                </button>
-                
-                <div class="auth-footer">
-                    <p><a href="#" onclick="showLoginForm()">Вернуться ко входу</a></p>
-                </div>
-            </div>
-        </div>
-        <div class="auth-bg-decoration"></div>
-    </div>
-
-    <!-- ==================== ОСНОВНОЕ ПРИЛОЖЕНИЕ ==================== -->
-    <div id="main-app" class="screen hidden">
+    <!-- ==================== ГЛАВНОЕ ПРИЛОЖЕНИЕ ==================== -->
+    <div id="main-app" class="screen">
         
         <!-- ЛЕВАЯ ПАНЕЛЬ -->
         <aside class="sidebar">
@@ -138,14 +27,25 @@
                 <button class="icon-btn" title="Фильтры"><i class="fas fa-filter"></i></button>
             </div>
 
+            <div class="user-profile-mini" onclick="openModal('profile-modal')">
+                <div class="avatar-small" id="mini-avatar">
+                    <span id="mini-avatar-initial">U</span>
+                </div>
+                <div class="user-info-mini">
+                    <span class="user-name" id="mini-username">Гость</span>
+                    <span class="user-status">онлайн</span>
+                </div>
+                <i class="fas fa-chevron-right" style="margin-left: auto; color: var(--text-secondary);"></i>
+            </div>
+
             <div class="chat-list" id="chat-list-container">
                 <!-- Чаты генерируются через JS -->
             </div>
 
             <!-- Контекстное меню -->
             <div class="context-menu hidden" id="sidebar-menu">
-                <div class="menu-item" onclick="openModal('settings-modal')">
-                    <i class="fas fa-cog"></i> Настройки
+                <div class="menu-item" onclick="openModal('profile-modal')">
+                    <i class="fas fa-user"></i> Профиль
                 </div>
                 <div class="menu-item" onclick="openModal('create-group-modal')">
                     <i class="fas fa-users"></i> Новая группа
@@ -160,9 +60,12 @@
                 <div class="menu-item" onclick="window.location.href='passwords.html'">
                     <i class="fas fa-shield-alt"></i> Безопасность
                 </div>
+                <div class="menu-item" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i> Тёмная тема
+                </div>
                 <div class="menu-divider"></div>
-                <div class="menu-item logout" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> Выйти
+                <div class="menu-item" onclick="clearData()">
+                    <i class="fas fa-trash"></i> Очистить данные
                 </div>
             </div>
         </aside>
@@ -189,7 +92,6 @@
 
             <div class="messages-container" id="messages-box">
                 <div class="message date-divider">Сегодня</div>
-                <!-- Сообщения будут добавляться через JS -->
             </div>
 
             <div class="typing-indicator hidden" id="typing-indicator">
@@ -227,11 +129,6 @@
                 <p class="info-status" id="info-panel-status">был(а) недавно</p>
                 
                 <div class="info-section">
-                    <div class="info-row">
-                        <i class="fas fa-envelope"></i>
-                        <span id="info-panel-email">email@example.com</span>
-                        <i class="fas fa-copy" style="cursor: pointer;" onclick="copyToClipboard()"></i>
-                    </div>
                     <div class="info-row">
                         <i class="fas fa-user"></i>
                         <span id="info-panel-username">@username</span>
@@ -272,6 +169,46 @@
 
     <!-- ==================== МОДАЛЬНЫЕ ОКНА ==================== -->
 
+    <!-- Профиль пользователя -->
+    <div class="modal-overlay hidden" id="profile-modal">
+        <div class="modal-window profile-window">
+            <div class="modal-header">
+                <h3>Мой профиль</h3>
+                <button class="icon-btn" onclick="closeModal('profile-modal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-avatar-section">
+                    <div class="avatar-large" id="profile-avatar">
+                        <span id="profile-avatar-initial">U</span>
+                    </div>
+                    <button class="icon-btn" onclick="changeAvatar()" title="Сменить аватар">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                
+                <div class="input-group">
+                    <label for="profile-name">Ваше имя</label>
+                    <input type="text" id="profile-name" class="input-field" placeholder="Как к вам обращаться?">
+                </div>
+
+                <div class="input-group">
+                    <label for="profile-username">Имя пользователя</label>
+                    <input type="text" id="profile-username" class="input-field" placeholder="@username">
+                </div>
+
+                <div class="input-group">
+                    <label for="profile-bio">О себе</label>
+                    <textarea id="profile-bio" class="input-field" placeholder="Расскажите о себе" rows="3"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-secondary" onclick="closeModal('profile-modal')">Отмена</button>
+                    <button class="btn-primary" onclick="saveProfile()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Настройки -->
     <div class="modal-overlay hidden" id="settings-modal">
         <div class="modal-window settings-window">
@@ -280,17 +217,6 @@
                 <button class="icon-btn" onclick="closeModal('settings-modal')"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <div class="settings-user-card">
-                    <div class="avatar-large" id="settings-avatar">
-                        <span>U</span>
-                    </div>
-                    <div>
-                        <h4 id="settings-username">User Name</h4>
-                        <p id="settings-email">email@example.com</p>
-                    </div>
-                    <button class="icon-btn" onclick="editProfile()" title="Редактировать"><i class="fas fa-pen"></i></button>
-                </div>
-
                 <div class="settings-list">
                     <div class="settings-item" onclick="toggleTheme()">
                         <div class="settings-icon blue"><i class="fas fa-moon"></i></div>
@@ -307,7 +233,7 @@
                     <div class="settings-item" onclick="window.location.href='passwords.html'">
                         <div class="settings-icon red"><i class="fas fa-lock"></i></div>
                         <div class="settings-text">
-                            <span>Конфиденциальность</span>
+                            <span>Безопасность</span>
                             <small>Пароль, 2FA, данные</small>
                         </div>
                         <i class="fas fa-chevron-right"></i>
@@ -336,24 +262,6 @@
                         <div class="settings-text">
                             <span>Язык</span>
                             <small>Русский</small>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-
-                    <div class="settings-item">
-                        <div class="settings-icon gray"><i class="fas fa-question-circle"></i></div>
-                        <div class="settings-text">
-                            <span>Помощь</span>
-                            <small>FAQ и поддержка</small>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-
-                    <div class="settings-item">
-                        <div class="settings-icon blue"><i class="fas fa-info-circle"></i></div>
-                        <div class="settings-text">
-                            <span>О приложении</span>
-                            <small>Версия 1.0.0</small>
                         </div>
                         <i class="fas fa-chevron-right"></i>
                     </div>
@@ -417,304 +325,6 @@
     <!-- Уведомления -->
     <div id="notification-container"></div>
 
-    <!-- Скрипт приложения -->
-    <script src="script.js"></script>
-</body>
-</html>
-    <!-- ==================== ОСНОВНОЕ ПРИЛОЖЕНИЕ ==================== -->
-    <div id="main-app" class="screen hidden">
-        
-        <!-- ЛЕВАЯ ПАНЕЛЬ -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <button class="icon-btn" onclick="toggleMenu()" title="Меню"><i class="fas fa-bars"></i></button>
-                <div class="search-container">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Поиск" id="chat-search">
-                </div>
-                <button class="icon-btn" title="Фильтры"><i class="fas fa-filter"></i></button>
-            </div>
-
-            <div class="chat-list" id="chat-list-container">
-                <!-- Чаты генерируются через JS -->
-            </div>
-
-            <!-- Контекстное меню -->
-            <div class="context-menu hidden" id="sidebar-menu">
-                <div class="menu-item" onclick="openModal('settings-modal')">
-                    <i class="fas fa-cog"></i> Настройки
-                </div>
-                <div class="menu-item" onclick="openModal('create-group-modal')">
-                    <i class="fas fa-users"></i> Новая группа
-                </div>
-                <div class="menu-item" onclick="openModal('contacts-modal')">
-                    <i class="fas fa-address-book"></i> Контакты
-                </div>
-                <div class="menu-item" onclick="openSavedMessages()">
-                    <i class="fas fa-bookmark"></i> Избранное
-                </div>
-                <div class="menu-divider"></div>
-                <div class="menu-item" onclick="window.location.href='passwords.html'">
-                    <i class="fas fa-shield-alt"></i> Безопасность
-                </div>
-                <div class="menu-divider"></div>
-                <div class="menu-item logout" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> Выйти
-                </div>
-            </div>
-        </aside>
-
-        <!-- ЦЕНТРАЛЬНАЯ ПАНЕЛЬ (ЧАТ) -->
-        <main class="chat-area">
-            <header class="chat-header">
-                <div class="chat-header-info" onclick="toggleInfoPanel()">
-                    <div class="avatar-small" id="current-chat-avatar">
-                        <span id="current-chat-initial">P</span>
-                    </div>
-                    <div class="chat-header-text">
-                        <h3 id="current-chat-name">Выберите чат</h3>
-                        <span class="status-text" id="current-chat-status">—</span>
-                    </div>
-                </div>
-                <div class="chat-header-actions">
-                    <button class="icon-btn" title="Поиск"><i class="fas fa-search"></i></button>
-                    <button class="icon-btn" title="Звонок"><i class="fas fa-phone"></i></button>
-                    <button class="icon-btn" title="Видеозвонок"><i class="fas fa-video"></i></button>
-                    <button class="icon-btn" title="Информация"><i class="fas fa-ellipsis-v"></i></button>
-                </div>
-            </header>
-
-            <div class="messages-container" id="messages-box">
-                <div class="message date-divider">Сегодня</div>
-                <!-- Сообщения будут добавляться через JS -->
-            </div>
-
-            <div class="typing-indicator hidden" id="typing-indicator">
-                <span class="typing-dots">
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                </span>
-                <span class="typing-text">печатает...</span>
-            </div>
-
-            <div class="input-area">
-                <button class="icon-btn attach-btn" title="Прикрепить"><i class="fas fa-paperclip"></i></button>
-                <div class="input-wrapper">
-                    <input type="text" id="message-input" placeholder="Написать сообщение..." autocomplete="off">
-                    <button class="icon-btn emoji-btn" title="Смайлы" onclick="toggleEmojiPicker()"><i class="far fa-smile"></i></button>
-                </div>
-                <button class="icon-btn mic-btn" id="send-mic-toggle" title="Голосовое"><i class="fas fa-microphone"></i></button>
-                <button class="icon-btn send-btn hidden" id="send-btn" onclick="sendMessage()" title="Отправить"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </main>
-
-        <!-- ПРАВАЯ ПАНЕЛЬ (ИНФО) -->
-        <aside class="info-panel hidden" id="info-panel">
-            <div class="info-header">
-                <button class="icon-btn" onclick="toggleInfoPanel()"><i class="fas fa-times"></i></button>
-                <h3>Информация</h3>
-                <div style="width: 40px"></div>
-            </div>
-            <div class="info-content">
-                <div class="info-avatar-large">
-                    <span id="info-panel-initial">P</span>
-                </div>
-                <h2 id="info-panel-name">Имя контакта</h2>
-                <p class="info-status" id="info-panel-status">был(а) недавно</p>
-                
-                <div class="info-section">
-                    <div class="info-row">
-                        <i class="fas fa-phone"></i>
-                        <span id="info-panel-phone">+7 999 000 00 00</span>
-                        <i class="fas fa-copy" style="cursor: pointer;" onclick="copyToClipboard()"></i>
-                    </div>
-                    <div class="info-row">
-                        <i class="fas fa-user"></i>
-                        <span id="info-panel-username">@username</span>
-                    </div>
-                    <div class="info-row">
-                        <i class="fas fa-info-circle"></i>
-                        <span id="info-panel-bio">О себе</span>
-                    </div>
-                </div>
-
-                <div class="info-section">
-                    <h4>Медиа, файлы и ссылки</h4>
-                    <div class="media-grid">
-                        <div class="media-item"><i class="fas fa-image"></i></div>
-                        <div class="media-item"><i class="fas fa-file-alt"></i></div>
-                        <div class="media-item"><i class="fas fa-link"></i></div>
-                        <div class="media-item"><i class="fas fa-music"></i></div>
-                        <div class="media-item"><i class="fas fa-video"></i></div>
-                        <div class="media-item"><i class="fas fa-folder"></i></div>
-                    </div>
-                    <button class="btn-text full-width" style="margin-top: 12px;">Показать все</button>
-                </div>
-                
-                <div class="info-section">
-                     <h4>Общие чаты</h4>
-                     <div class="common-chats-list">
-                         <div class="common-chat-item">Priconnecte News</div>
-                         <div class="common-chat-item">Developers</div>
-                         <div class="common-chat-item">Design Team</div>
-                     </div>
-                </div>
-            </div>
-            <div class="info-footer">
-                <button class="btn-danger full-width" onclick="blockUser()">Заблокировать</button>
-            </div>
-        </aside>
-    </div>
-
-    <!-- ==================== МОДАЛЬНЫЕ ОКНА ==================== -->
-
-    <!-- Настройки -->
-    <div class="modal-overlay hidden" id="settings-modal">
-        <div class="modal-window settings-window">
-            <div class="modal-header">
-                <h3>Настройки</h3>
-                <button class="icon-btn" onclick="closeModal('settings-modal')"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-user-card">
-                    <div class="avatar-large" id="settings-avatar">
-                        <span>U</span>
-                    </div>
-                    <div>
-                        <h4 id="settings-username">User Name</h4>
-                        <p id="settings-phone">+7 999 000 00 00</p>
-                    </div>
-                    <button class="icon-btn" onclick="editProfile()" title="Редактировать"><i class="fas fa-pen"></i></button>
-                </div>
-
-                <div class="settings-list">
-                    <div class="settings-item" onclick="toggleTheme()">
-                        <div class="settings-icon blue"><i class="fas fa-moon"></i></div>
-                        <div class="settings-text">
-                            <span>Ночная тема</span>
-                            <small>Переключить оформление</small>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="theme-switch">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="settings-item" onclick="window.location.href='passwords.html'">
-                        <div class="settings-icon red"><i class="fas fa-lock"></i></div>
-                        <div class="settings-text">
-                            <span>Конфиденциальность</span>
-                            <small>Пароль, 2FA, данные</small>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-
-                    <div class="settings-item">
-                        <div class="settings-icon green"><i class="fas fa-bell"></i></div>
-                        <div class="settings-text">
-                            <span>Уведомления</span>
-                            <small>Звук, вибрация</small>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-                    
-                    <div class="settings-item">
-                        <div class="settings-icon orange"><i class="fas fa-palette"></i></div>
-                        <div class="settings-text">
-                            <span>Обои чата</span>
-                            <small>Фон переписки</small>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-
-                    <div class="settings-item">
-                        <div class="settings-icon purple"><i class="fas fa-language"></i></div>
-                        <div class="settings-text">
-                            <span>Язык</span>
-                            <small>Русский</small>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-
-                    <div class="settings-item">
-                        <div class="settings-icon gray"><i class="fas fa-question-circle"></i></div>
-                        <div class="settings-text">
-                            <span>Помощь</span>
-                            <small>FAQ и поддержка</small>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-
-                    <div class="settings-item">
-                        <div class="settings-icon blue"><i class="fas fa-info-circle"></i></div>
-                        <div class="settings-text">
-                            <span>О приложении</span>
-                            <small>Версия 1.0.0</small>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Новая группа -->
-    <div class="modal-overlay hidden" id="create-group-modal">
-        <div class="modal-window">
-            <div class="modal-header">
-                <h3>Новая группа</h3>
-                <button class="icon-btn" onclick="closeModal('create-group-modal')"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group">
-                    <label>Название группы</label>
-                    <input type="text" id="group-name-input" class="input-field" placeholder="Введите название">
-                </div>
-                <div class="input-group">
-                    <label>Описание (необязательно)</label>
-                    <textarea id="group-desc-input" class="input-field" placeholder="О чем эта группа?" rows="3"></textarea>
-                </div>
-                <div class="input-group">
-                    <label>Участники</label>
-                    <div class="contacts-select" id="group-contacts">
-                        <!-- Контакты генерируются через JS -->
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button class="btn-secondary" onclick="closeModal('create-group-modal')">Отмена</button>
-                    <button class="btn-primary" onclick="createGroup()">Создать</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Контакты -->
-    <div class="modal-overlay hidden" id="contacts-modal">
-        <div class="modal-window">
-            <div class="modal-header">
-                <h3>Контакты</h3>
-                <button class="icon-btn" onclick="closeModal('contacts-modal')"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="search-container" style="margin-bottom: 16px;">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Поиск контактов" id="contact-search">
-                </div>
-                <div class="contacts-list" id="contacts-list">
-                    <!-- Контакты генерируются через JS -->
-                </div>
-                <button class="btn-primary full-width" style="margin-top: 16px;">
-                    <i class="fas fa-user-plus"></i> Добавить контакт
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Уведомления -->
-    <div id="notification-container"></div>
-
-    <!-- Скрипт приложения -->
     <script src="script.js"></script>
 </body>
 </html>
