@@ -1,7 +1,3 @@
-/* ========================================== */
-/* PRICONNECTE MESSENGER - BACKEND            */
-/* ========================================== */
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -13,20 +9,16 @@ const fs = require('fs');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+    cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// База данных в памяти
+// База данных
 const db = {
     users: new Map(),
-    sessions: new Map(),
     messages: new Map(),
     chats: new Map()
 };
@@ -49,42 +41,43 @@ function loadData() {
             db.messages = new Map(JSON.parse(fs.readFileSync(path.join(dataDir, 'messages.json'), 'utf8')));
             db.chats = new Map(JSON.parse(fs.readFileSync(path.join(dataDir, 'chats.json'), 'utf8')));
             console.log('✅ Данные загружены');
-        } catch (error) {
-            console.log('⚠️ Создаём новую базу данных');
+        } catch (e) {
+            console.log('⚠️ Новая база данных');
         }
     }
 }
 
 loadData();
 
-// API: Создание пользователя (авто)
+// API: Создание пользователя
 app.post('/api/user/create', (req, res) => {
     try {
-        const { name } = req.body;
         const userId = uuidv4();
-        
         const user = {
             id: userId,
-            name: name || 'Гость ' + Math.floor(Math.random() * 1000),
+            name: req.body.name || 'Гость ' + Math.floor(Math.random() * 1000),
             username: '@user' + Math.floor(Math.random() * 10000),
             bio: '',
+            email: '',
             avatar: null,
             createdAt: Date.now(),
             lastSeen: Date.now(),
             settings: {
-                theme: 'light',
-                notifications: true
+                theme: 'dark',
+                notifications: true,
+                enterSend: true,
+                fontSize: 14
             },
             privacy: {
                 online: 'everyone',
                 photo: 'everyone',
                 lastSeen: 'everyone'
-            }
+            },
+            blocked: []
         };
         
         db.users.set(userId, user);
         saveData();
-        
         res.json({ success: true, user });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сервера' });
@@ -97,17 +90,17 @@ app.put('/api/user/profile/:userId', (req, res) => {
         const user = db.users.get(req.params.userId);
         if (!user) return res.status(404).json({ error: 'Не найден' });
         
-        const { name, username, bio, settings, privacy } = req.body;
+        const { name, username, bio, email, settings, privacy } = req.body;
         
-        if (name) user.name = name;
-        if (username) user.username = username;
-        if (bio) user.bio = bio;
+        if (name !== undefined) user.name = name;
+        if (username !== undefined) user.username = username;
+        if (bio !== undefined) user.bio = bio;
+        if (email !== undefined) user.email = email;
         if (settings) user.settings = { ...user.settings, ...settings };
         if (privacy) user.privacy = { ...user.privacy, ...privacy };
         
         db.users.set(req.params.userId, user);
         saveData();
-        
         res.json({ success: true, user });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сервера' });
@@ -125,6 +118,7 @@ app.get('/api/user/profile/:userId', (req, res) => {
             name: user.name,
             username: user.username,
             bio: user.bio,
+            email: user.email,
             avatar: user.avatar,
             settings: user.settings,
             privacy: user.privacy
@@ -134,7 +128,7 @@ app.get('/api/user/profile/:userId', (req, res) => {
     }
 });
 
-// API: Очистка данных пользователя
+// API: Очистка данных
 app.delete('/api/user/data/:userId', (req, res) => {
     try {
         db.users.delete(req.params.userId);
@@ -153,104 +147,88 @@ io.on('connection', (socket) => {
     console.log(`🔌 Подключён: ${socket.id}`);
     
     socket.on('auth', (data) => {
-        const { userId } = data;
-        const user = db.users.get(userId);
-        
+        const user = db.users.get(data.userId);
         if (!user) {
             socket.emit('auth_error', { error: 'Пользователь не найден' });
             return;
         }
         
-        connectedUsers.set(socket.id, { userId, user });
+        connectedUsers.set(socket.id, { userId: data.userId, user });
         user.lastSeen = Date.now();
-        db.users.set(userId, user);
+        db.users.set(data.userId, user);
         saveData();
         
         socket.emit('auth_success', { user });
-        
-        socket.broadcast.emit('user_status', {
-            userId,
-            status: 'online',
-            lastSeen: Date.now()
-        });
-        
+        socket.broadcast.emit('user_status', { userId: data.userId, status: 'online' });
         console.log(`✅ Авторизован: ${user.name}`);
     });
     
     socket.on('send_message', (data) => {
-        const { chatId, text, type = 'text' } = data;
         const connection = connectedUsers.get(socket.id);
-        
         if (!connection) {
             socket.emit('error', { error: 'Не авторизован' });
             return;
         }
         
         const { userId, user } = connection;
-        
         const messageId = uuidv4();
+        
         const message = {
             id: messageId,
-            chatId,
+            chatId: data.chatId,
             senderId: userId,
-            text,
-            type,
+            text: data.text,
+            type: data.type || 'text',
             timestamp: Date.now(),
             status: 'sent',
             read: false
         };
         
-        if (!db.messages.has(chatId)) db.messages.set(chatId, []);
-        db.messages.get(chatId).push(message);
+        if (!db.messages.has(data.chatId)) db.messages.set(data.chatId, []);
+        db.messages.get(data.chatId).push(message);
         saveData();
         
         io.emit('new_message', {
-            chatId,
-            message: {
-                ...message,
-                sender: { id: user.id, name: user.name }
-            }
+            chatId: data.chatId,
+            message: { ...message, sender: { id: user.id, name: user.name } }
         });
         
-        if (db.chats.has(chatId)) {
-            const chat = db.chats.get(chatId);
-            chat.lastMessage = text;
+        if (db.chats.has(data.chatId)) {
+            const chat = db.chats.get(data.chatId);
+            chat.lastMessage = data.text;
             chat.lastMessageTime = Date.now();
-            db.chats.set(chatId, chat);
+            db.chats.set(data.chatId, chat);
             saveData();
         }
     });
     
     socket.on('typing', (data) => {
-        const { chatId, isTyping } = data;
         const connection = connectedUsers.get(socket.id);
         if (!connection) return;
         
         socket.broadcast.emit('user_typing', {
-            chatId,
+            chatId: data.chatId,
             userId: connection.userId,
             username: connection.user.name,
-            isTyping
+            isTyping: data.isTyping
         });
     });
     
     socket.on('mark_read', (data) => {
-        const { chatId, messageIds } = data;
         const connection = connectedUsers.get(socket.id);
         if (!connection) return;
         
-        const messages = db.messages.get(chatId) || [];
+        const messages = db.messages.get(data.chatId) || [];
         messages.forEach(msg => {
-            if (messageIds.includes(msg.id) && msg.senderId !== connection.userId) {
+            if (data.messageIds.includes(msg.id) && msg.senderId !== connection.userId) {
                 msg.status = 'read';
                 msg.read = true;
             }
         });
         
-        db.messages.set(chatId, messages);
+        db.messages.set(data.chatId, messages);
         saveData();
-        
-        io.emit('messages_read', { chatId, messageIds, readBy: connection.userId });
+        io.emit('messages_read', { chatId: data.chatId, messageIds: data.messageIds });
     });
     
     socket.on('disconnect', () => {
@@ -262,13 +240,7 @@ io.on('connection', (socket) => {
                 db.users.set(connection.userId, user);
                 saveData();
             }
-            
-            socket.broadcast.emit('user_status', {
-                userId: connection.userId,
-                status: 'offline',
-                lastSeen: Date.now()
-            });
-            
+            socket.broadcast.emit('user_status', { userId: connection.userId, status: 'offline' });
             connectedUsers.delete(socket.id);
         }
         console.log(`🔌 Отключён: ${socket.id}`);
@@ -281,7 +253,7 @@ server.listen(PORT, () => {
     console.log('╔════════════════════════════════════════════╗');
     console.log('║  🚀 PRICONNECTE MESSENGER                  ║');
     console.log(`║  🌐 Порт: ${PORT}                              ║`);
-    console.log('║  ✅ Сервер запущен!                         ║');
+    console.log('║  ✅ Сервер запущен!                         ║`);
     console.log(`║  📱 http://localhost:${PORT}                   ║`);
     console.log('╚════════════════════════════════════════════╝');
 });
