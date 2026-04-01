@@ -19,8 +19,18 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-section">
-                    <div class="logo-icon-gradient">
-                        <i class="fas fa-paper-plane"></i>
+                    <div class="logo-icon-custom">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#667eea"/>
+                                    <stop offset="100%" style="stop-color:#764ba2"/>
+                                </linearGradient>
+                            </defs>
+                            <circle cx="50" cy="50" r="45" fill="url(#logoGrad)"/>
+                            <path d="M30 50 L45 65 L70 35" stroke="white" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="70" cy="35" r="8" fill="white"/>
+                        </svg>
                     </div>
                     <h1 class="logo-text">Priconnecte</h1>
                 </div>
@@ -48,14 +58,23 @@
             </div>
 
             <div class="chat-tabs">
-                <button class="tab-btn active" data-tab="all">
+                <button class="tab-btn active" data-tab="all" onclick="filterChats('all')">
                     <i class="fas fa-comment"></i> Все
                 </button>
-                <button class="tab-btn" data-tab="unread">
+                <button class="tab-btn" data-tab="unread" onclick="filterChats('unread')">
                     <i class="fas fa-envelope"></i> Непрочитанные
                 </button>
-                <button class="tab-btn" data-tab="archived">
+                <button class="tab-btn" data-tab="archived" onclick="filterChats('archived')">
                     <i class="fas fa-archive"></i> Архив
+                </button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" onclick="openModal('new-chat-modal')" title="Новый чат">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="action-btn" onclick="openModal('create-group-modal')" title="Новая группа">
+                    <i class="fas fa-users"></i>
                 </button>
             </div>
 
@@ -65,6 +84,9 @@
             <div class="context-menu hidden" id="sidebar-menu">
                 <div class="menu-item" onclick="openModal('profile-modal')">
                     <i class="fas fa-user"></i> Профиль
+                </div>
+                <div class="menu-item" onclick="openModal('new-chat-modal')">
+                    <i class="fas fa-comment-alt"></i> Новый чат
                 </div>
                 <div class="menu-item" onclick="openModal('create-group-modal')">
                     <i class="fas fa-users"></i> Новая группа
@@ -104,12 +126,39 @@
                     </div>
                 </div>
                 <div class="chat-header-actions">
-                    <button class="header-btn" title="Поиск"><i class="fas fa-search"></i></button>
-                    <button class="header-btn" title="Звонок"><i class="fas fa-phone"></i></button>
-                    <button class="header-btn" title="Видео"><i class="fas fa-video"></i></button>
-                    <button class="header-btn" title="Меню"><i class="fas fa-ellipsis-v"></i></button>
+                    <button class="header-btn" title="Поиск в чате" onclick="openSearchInChat()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="header-btn" title="Звонок" onclick="startCall('audio')">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button class="header-btn" title="Видео" onclick="startCall('video')">
+                        <i class="fas fa-video"></i>
+                    </button>
+                    <button class="header-btn" title="Меню" onclick="openChatMenu()">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
                 </div>
             </header>
+
+            <!-- Меню чата -->
+            <div class="chat-menu-popup hidden" id="chat-menu-popup">
+                <div class="menu-item" onclick="pinChat()">
+                    <i class="fas fa-thumbtack"></i> Закрепить
+                </div>
+                <div class="menu-item" onclick="muteChat()">
+                    <i class="fas fa-bell-slash"></i> Отключить звук
+                </div>
+                <div class="menu-item" onclick="archiveChat()">
+                    <i class="fas fa-archive"></i> Архивировать
+                </div>
+                <div class="menu-item" onclick="clearChatHistory()">
+                    <i class="fas fa-trash"></i> Очистить историю
+                </div>
+                <div class="menu-item danger" onclick="deleteChat()">
+                    <i class="fas fa-times"></i> Удалить чат
+                </div>
+            </div>
 
             <div class="messages-container" id="messages-box">
                 <div class="message date-divider">
@@ -126,8 +175,41 @@
                 <span class="typing-text">печатает...</span>
             </div>
 
+            <!-- Панель прикрепления файлов -->
+            <div class="attachment-panel hidden" id="attachment-panel">
+                <div class="attachment-options">
+                    <button class="attachment-option" onclick="triggerPhotoUpload()">
+                        <i class="fas fa-image"></i>
+                        <span>Фото</span>
+                    </button>
+                    <button class="attachment-option" onclick="triggerFileUpload()">
+                        <i class="fas fa-file"></i>
+                        <span>Файл</span>
+                    </button>
+                    <button class="attachment-option" onclick="startVoiceRecording()">
+                        <i class="fas fa-microphone"></i>
+                        <span>Голосовое</span>
+                    </button>
+                    <button class="attachment-option" onclick="openLocationPicker()">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Геопозиция</span>
+                    </button>
+                    <button class="attachment-option" onclick="openContactPicker()">
+                        <i class="fas fa-user"></i>
+                        <span>Контакт</span>
+                    </button>
+                </div>
+                <button class="close-attachment" onclick="closeAttachmentPanel()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Скрытые input для загрузки -->
+            <input type="file" id="photo-upload" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(event)">
+            <input type="file" id="file-upload" style="display: none;" onchange="handleFileUpload(event)">
+
             <div class="input-area">
-                <button class="icon-btn attach-btn" title="Прикрепить">
+                <button class="icon-btn attach-btn" title="Прикрепить" onclick="toggleAttachmentPanel()">
                     <i class="fas fa-paperclip"></i>
                 </button>
                 <div class="input-wrapper">
@@ -136,7 +218,7 @@
                         <i class="far fa-smile"></i>
                     </button>
                 </div>
-                <button class="icon-btn mic-btn" id="send-mic-toggle" title="Голосовое">
+                <button class="icon-btn mic-btn" id="send-mic-toggle" title="Голосовое" onmousedown="startRecording()" onmouseup="stopRecording()">
                     <i class="fas fa-microphone"></i>
                 </button>
                 <button class="send-btn-gradient hidden" id="send-btn" onclick="sendMessage()" title="Отправить">
@@ -168,13 +250,13 @@
                 </p>
                 
                 <div class="quick-actions">
-                    <button class="quick-action-btn" title="Звонок">
+                    <button class="quick-action-btn" title="Звонок" onclick="startCall('audio')">
                         <i class="fas fa-phone"></i>
                     </button>
-                    <button class="quick-action-btn" title="Видео">
+                    <button class="quick-action-btn" title="Видео" onclick="startCall('video')">
                         <i class="fas fa-video"></i>
                     </button>
-                    <button class="quick-action-btn" title="Поиск">
+                    <button class="quick-action-btn" title="Поиск" onclick="openSearchInChat()">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
@@ -193,18 +275,23 @@
                         <i class="fas fa-clock"></i>
                         <span>Был(а) недавно</span>
                     </div>
+                    <div class="info-row">
+                        <i class="fas fa-phone"></i>
+                        <span>+7 999 000 00 00</span>
+                    </div>
                 </div>
 
                 <div class="info-section">
                     <h4><i class="fas fa-images"></i> Медиа</h4>
-                    <div class="media-grid">
-                        <div class="media-item"><i class="fas fa-image"></i></div>
-                        <div class="media-item"><i class="fas fa-file-alt"></i></div>
-                        <div class="media-item"><i class="fas fa-link"></i></div>
-                        <div class="media-item"><i class="fas fa-music"></i></div>
-                        <div class="media-item"><i class="fas fa-video"></i></div>
-                        <div class="media-item"><i class="fas fa-folder"></i></div>
+                    <div class="media-grid" id="media-grid">
+                        <div class="media-item" onclick="viewMedia('image')"><i class="fas fa-image"></i></div>
+                        <div class="media-item" onclick="viewMedia('file')"><i class="fas fa-file-alt"></i></div>
+                        <div class="media-item" onclick="viewMedia('link')"><i class="fas fa-link"></i></div>
+                        <div class="media-item" onclick="viewMedia('music')"><i class="fas fa-music"></i></div>
+                        <div class="media-item" onclick="viewMedia('video')"><i class="fas fa-video"></i></div>
+                        <div class="media-item" onclick="viewMedia('folder')"><i class="fas fa-folder"></i></div>
                     </div>
+                    <button class="btn-text full-width" style="margin-top: 12px;" onclick="showAllMedia()">Показать все</button>
                 </div>
 
                 <div class="info-section">
@@ -230,24 +317,48 @@
                     <div class="toggle-row">
                         <span>Звук</span>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="notify-sound" checked onchange="saveNotificationSettings()">
                             <span class="slider"></span>
                         </label>
                     </div>
                     <div class="toggle-row">
                         <span>Вибрация</span>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="notify-vibrate" checked onchange="saveNotificationSettings()">
                             <span class="slider"></span>
                         </label>
                     </div>
                     <div class="toggle-row">
                         <span>Предпросмотр</span>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="notify-preview" checked onchange="saveNotificationSettings()">
                             <span class="slider"></span>
                         </label>
                     </div>
+                </div>
+
+                <div class="info-section">
+                    <h4><i class="fas fa-folder"></i> Папки с чатами</h4>
+                    <div class="folder-list">
+                        <div class="folder-item">
+                            <i class="fas fa-folder" style="color: #667eea;"></i>
+                            <span>Личное</span>
+                            <span class="folder-count">5</span>
+                        </div>
+                        <div class="folder-item">
+                            <i class="fas fa-folder" style="color: #f093fb;"></i>
+                            <span>Работа</span>
+                            <span class="folder-count">12</span>
+                        </div>
+                        <div class="folder-item">
+                            <i class="fas fa-folder" style="color: #4caf50;"></i>
+                            <span>Проекты</span>
+                            <span class="folder-count">8</span>
+                        </div>
+                    </div>
+                    <button class="btn-small full-width" style="margin-top: 12px;" onclick="createFolder()">
+                        <i class="fas fa-plus"></i> Создать папку
+                    </button>
                 </div>
             </div>
             
@@ -260,6 +371,30 @@
     </div>
 
     <!-- ==================== МОДАЛЬНЫЕ ОКНА ==================== -->
+
+    <!-- Новый чат -->
+    <div class="modal-overlay hidden" id="new-chat-modal">
+        <div class="modal-window">
+            <div class="modal-header-gradient">
+                <h3><i class="fas fa-comment-alt"></i> Новый чат</h3>
+                <button class="icon-btn" onclick="closeModal('new-chat-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="search-container" style="margin-bottom: 20px;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Поиск контактов..." id="new-chat-search" oninput="filterContactsForNewChat()">
+                </div>
+                <div class="contacts-list" id="new-chat-contacts">
+                    <!-- Контакты генерируются JS -->
+                </div>
+                <button class="btn-primary-gradient full-width" style="margin-top: 16px;" onclick="createNewChat()">
+                    <i class="fas fa-plus"></i> Создать чат
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Профиль -->
     <div class="modal-overlay hidden" id="profile-modal">
@@ -341,7 +476,7 @@
                         </label>
                     </div>
 
-                    <div class="settings-item">
+                    <div class="settings-item" onclick="changeChatBackground()">
                         <div class="settings-icon-gradient purple">
                             <i class="fas fa-image"></i>
                         </div>
@@ -349,22 +484,18 @@
                             <span>Обои чата</span>
                             <small>Фон переписки</small>
                         </div>
-                        <button class="btn-small" onclick="changeChatBackground()">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                        <i class="fas fa-chevron-right"></i>
                     </div>
 
-                    <div class="settings-item">
+                    <div class="settings-item" onclick="changeFontSize()">
                         <div class="settings-icon-gradient orange">
                             <i class="fas fa-text-height"></i>
                         </div>
                         <div class="settings-text">
                             <span>Размер шрифта</span>
-                            <small>14px</small>
+                            <small id="font-size-display">14px</small>
                         </div>
-                        <button class="btn-small" onclick="changeFontSize()">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                        <i class="fas fa-chevron-right"></i>
                     </div>
 
                     <div class="settings-item">
@@ -379,6 +510,17 @@
                             <input type="checkbox" id="enter-send-switch" checked>
                             <span class="slider"></span>
                         </label>
+                    </div>
+
+                    <div class="settings-item" onclick="openModal('chat-backgrounds-modal')">
+                        <div class="settings-icon-gradient blue">
+                            <i class="fas fa-wallpaper"></i>
+                        </div>
+                        <div class="settings-text">
+                            <span>Фон чата</span>
+                            <small>Выбрать изображение</small>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
                     </div>
                 </div>
 
@@ -397,7 +539,7 @@
                             <small>Воспроизводить звук</small>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="sound-switch" checked>
+                            <input type="checkbox" id="sound-switch" checked onchange="saveNotificationSettings()">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -411,7 +553,7 @@
                             <small>Вибрировать при уведомлении</small>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="vibration-switch" checked>
+                            <input type="checkbox" id="vibration-switch" checked onchange="saveNotificationSettings()">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -425,7 +567,7 @@
                             <small>Показывать на рабочем столе</small>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="desktop-notif-switch" checked>
+                            <input type="checkbox" id="desktop-notif-switch" checked onchange="saveNotificationSettings()">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -476,7 +618,18 @@
                         </div>
                         <div class="settings-text">
                             <span>Заблокированные</span>
-                            <small>0 контактов</small>
+                            <small id="blocked-count">0 контактов</small>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+
+                    <div class="settings-item" onclick="openModal('active-sessions-modal')">
+                        <div class="settings-icon-gradient purple">
+                            <i class="fas fa-laptop"></i>
+                        </div>
+                        <div class="settings-text">
+                            <span>Активные сеансы</span>
+                            <small>Управление устройствами</small>
                         </div>
                         <i class="fas fa-chevron-right"></i>
                     </div>
@@ -499,8 +652,19 @@
                         <i class="fas fa-chevron-right"></i>
                     </div>
 
-                    <div class="settings-item" onclick="clearCache()">
+                    <div class="settings-item" onclick="importData()">
                         <div class="settings-icon-gradient blue">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <div class="settings-text">
+                            <span>Импорт данных</span>
+                            <small>Восстановить из файла</small>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+
+                    <div class="settings-item" onclick="clearCache()">
+                        <div class="settings-icon-gradient orange">
                             <i class="fas fa-trash-alt"></i>
                         </div>
                         <div class="settings-text">
@@ -522,6 +686,35 @@
                     </div>
                 </div>
 
+                <!-- Язык -->
+                <div class="settings-section">
+                    <h4 class="settings-section-title">
+                        <i class="fas fa-language"></i> Язык
+                    </h4>
+                    
+                    <div class="settings-item" onclick="changeLanguage('ru')">
+                        <div class="settings-icon-gradient blue">
+                            <i class="fas fa-flag"></i>
+                        </div>
+                        <div class="settings-text">
+                            <span>Русский</span>
+                            <small>Текущий язык</small>
+                        </div>
+                        <i class="fas fa-check" style="color: #4caf50;"></i>
+                    </div>
+
+                    <div class="settings-item" onclick="changeLanguage('en')">
+                        <div class="settings-icon-gradient blue">
+                            <i class="fas fa-flag"></i>
+                        </div>
+                        <div class="settings-text">
+                            <span>English</span>
+                            <small>Switch language</small>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
                 <!-- О приложении -->
                 <div class="settings-section">
                     <h4 class="settings-section-title">
@@ -529,8 +722,18 @@
                     </h4>
                     
                     <div class="app-info-card">
-                        <div class="logo-icon-gradient" style="width: 60px; height: 60px; margin: 0 auto 16px;">
-                            <i class="fas fa-paper-plane" style="font-size: 28px;"></i>
+                        <div class="logo-icon-custom" style="width: 80px; height: 80px; margin: 0 auto 16px;">
+                            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="logoGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#667eea"/>
+                                        <stop offset="100%" style="stop-color:#764ba2"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="50" cy="50" r="45" fill="url(#logoGrad2)"/>
+                                <path d="M30 50 L45 65 L70 35" stroke="white" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="70" cy="35" r="8" fill="white"/>
+                            </svg>
                         </div>
                         <h3 style="text-align: center; margin-bottom: 8px;">Priconnecte</h3>
                         <p style="text-align: center; color: var(--text-secondary); margin-bottom: 16px;">
@@ -549,6 +752,15 @@
                                 <span>Режим</span>
                                 <span class="version-value">Без регистрации</span>
                             </div>
+                            <div class="version-row">
+                                <span>Разработчик</span>
+                                <span class="version-value">Priconnecte Team</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <button class="btn-secondary-gradient full-width" onclick="checkForUpdates()">
+                                <i class="fas fa-sync"></i> Проверить обновления
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -557,7 +769,40 @@
         </div>
     </div>
 
-    <!-- Приватность -->
+    <!-- Эмодзи пикер -->
+    <div class="emoji-picker hidden" id="emoji-picker">
+        <div class="emoji-categories">
+            <button class="emoji-category active" data-category="smileys">😀</button>
+            <button class="emoji-category" data-category="animals">🐶</button>
+            <button class="emoji-category" data-category="food">🍕</button>
+            <button class="emoji-category" data-category="activities">⚽</button>
+            <button class="emoji-category" data-category="travel">🚗</button>
+            <button class="emoji-category" data-category="objects">💡</button>
+            <button class="emoji-category" data-category="symbols">❤️</button>
+            <button class="emoji-category" data-category="flags">🏁</button>
+        </div>
+        <div class="emoji-grid" id="emoji-grid">
+            <!-- Эмодзи генерируются JS -->
+        </div>
+    </div>
+
+    <!-- Просмотр медиа -->
+    <div class="modal-overlay hidden" id="media-viewer-modal">
+        <div class="media-viewer">
+            <button class="close-media-viewer" onclick="closeModal('media-viewer-modal')">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="media-viewer-content" id="media-viewer-content">
+                <!-- Контент генерируется JS -->
+            </div>
+            <div class="media-viewer-nav">
+                <button class="nav-btn" onclick="previousMedia()"><i class="fas fa-chevron-left"></i></button>
+                <button class="nav-btn" onclick="nextMedia()"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Остальные модальные окна (приватность, заблокированные и т.д.) -->
     <div class="modal-overlay hidden" id="privacy-modal">
         <div class="modal-window">
             <div class="modal-header-gradient">
@@ -599,7 +844,6 @@
         </div>
     </div>
 
-    <!-- Заблокированные -->
     <div class="modal-overlay hidden" id="blocked-modal">
         <div class="modal-window">
             <div class="modal-header-gradient">
@@ -616,7 +860,6 @@
         </div>
     </div>
 
-    <!-- Новая группа -->
     <div class="modal-overlay hidden" id="create-group-modal">
         <div class="modal-window">
             <div class="modal-header-gradient">
@@ -634,6 +877,12 @@
                     <label>Описание</label>
                     <textarea id="group-desc-input" class="input-field-gradient" placeholder="О чем эта группа?" rows="3"></textarea>
                 </div>
+                <div class="input-group">
+                    <label>Участники</label>
+                    <div class="contacts-select" id="group-contacts">
+                        <!-- Контакты генерируются JS -->
+                    </div>
+                </div>
                 <div class="form-actions">
                     <button class="btn-secondary-gradient" onclick="closeModal('create-group-modal')">Отмена</button>
                     <button class="btn-primary-gradient" onclick="createGroup()">Создать</button>
@@ -642,7 +891,6 @@
         </div>
     </div>
 
-    <!-- Контакты -->
     <div class="modal-overlay hidden" id="contacts-modal">
         <div class="modal-window">
             <div class="modal-header-gradient">
@@ -666,6 +914,9 @@
 
     <!-- Уведомления -->
     <div id="notification-container"></div>
+
+    <!-- Скрытый input для импорта -->
+    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="handleImport(event)">
 
     <script src="script.js"></script>
 </body>
