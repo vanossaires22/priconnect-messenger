@@ -13,7 +13,7 @@ const io = new Server(server, {
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static(__dirname));
 
 // База данных
@@ -179,6 +179,7 @@ io.on('connection', (socket) => {
             senderId: userId,
             text: data.text,
             type: data.type || 'text',
+            file: data.file || null,
             timestamp: Date.now(),
             status: 'sent',
             read: false
@@ -253,7 +254,7 @@ server.listen(PORT, () => {
     console.log('╔════════════════════════════════════════════╗');
     console.log('║  🚀 PRICONNECTE MESSENGER                  ║');
     console.log(`║  🌐 Порт: ${PORT}                              ║`);
-    console.log('║  ✅ Сервер запущен!                         ║`);
+    console.log('║  ✅ Сервер запущен!                         ║');
     console.log(`║  📱 http://localhost:${PORT}                   ║`);
     console.log('╚════════════════════════════════════════════╝');
 });
