@@ -2,36 +2,6 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Мой сайт</title>
-</head>
-<body>
-    <h1>Привет, Firebase!</h1>
-    <button id="btn">Добавить данные</button>
-
-    <!-- Сначала конфиг -->
-    <script type="module" src="js/firebase-config.js"></script>
-    
-    <!-- Потом ваш основной скрипт -->
-    <script type="module">
-        // Ждем загрузки страницы
-        document.getElementById('btn').addEventListener('click', async () => {
-            // Берем db из window (так как это модуль)
-            const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-            
-            try {
-                await addDoc(collection(window.db, "test"), {
-                    name: "Тест из GitHub Editor",
-                    date: new Date()
-                });
-                alert("Данные отправлены!");
-            } catch (e) {
-                console.error("Ошибка: ", e);
-            }
-        });
-    </script>
-</body>
-<head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0e27">
     <title>Priconnecte | Мессенджер</title>
@@ -434,3 +404,24 @@
     <script src="script.js"></script>
 </body>
 </html>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+  
+  const supabaseUrl = 'YOUR_SUPABASE_URL'
+  const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'
+  const supabase = createClient(supabaseUrl, supabaseKey)
+  
+  // Пример: добавить данные
+  async function addMessage() {
+    const { data, error } = await supabase
+      .from('приконнект')
+      .insert([{ username: 'test', message: 'Hello' }])
+  }
+  
+  // Пример: получить данные
+  async function getMessages() {
+    const { data, error } = await supabase
+      .from('приконнект')
+      .select('*')
+  }
+</script>
