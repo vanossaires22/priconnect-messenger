@@ -48,12 +48,7 @@ function verifyPassword(password, hash) {
     return bcrypt.compareSync(password, hash);
 }
 
-function generateVerificationCode() {
-    return Math.floor(10000 + Math.random() * 90000).toString();
-}
-
 function saveData() {
-    // Сохранение в файлы для персистентности
     const dataDir = path.join(__dirname, 'data');
     if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir);
@@ -93,32 +88,33 @@ loadData();
 // REST API ENDPOINTS
 // ==========================================
 
-// Регистрация пользователя
+// РЕГИСТРАЦИЯ (Email + Password)
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { phone, username, password } = req.body;
+        const { name, email, password } = req.body;
         
-        if (!phone || !username) {
-            return res.status(400).json({ error: 'Телефон и имя обязательны' });
+        if (!email || !password || !name) {
+            return res.status(400).json({ error: 'Все поля обязательны' });
+        }
+        
+        if (password.length < 6) {
+            return res.status(400).json({ error: 'Пароль должен быть минимум 6 символов' });
         }
         
         // Проверка существующего пользователя
         for (const [id, user] of db.users) {
-            if (user.phone === phone) {
-                return res.status(409).json({ error: 'Пользователь уже существует' });
+            if (user.email === email) {
+                return res.status(409).json({ error: 'Email уже зарегистрирован' });
             }
         }
         
         const userId = uuidv4();
-        const verificationCode = generateVerificationCode();
         
         const user = {
             id: userId,
-            phone,
-            username,
-            password: password ? hashPassword(password) : null,
-            verificationCode,
-            verificationCodeExpiry: Date.now() + 300000, // 5 минут
+            name,
+            email,
+            password: hashPassword(password),
             twoFAEnabled: false,
             twoFAPassword: null,
             twoFAHint: null,
@@ -126,7 +122,7 @@ app.post('/api/auth/register', async (req, res) => {
             createdAt: Date.now(),
             lastSeen: Date.now(),
             profile: {
-                firstName: username,
+                firstName: name,
                 lastName: '',
                 bio: '',
                 avatar: null
@@ -137,7 +133,7 @@ app.post('/api/auth/register', async (req, res) => {
                 language: 'ru'
             },
             privacy: {
-                phoneNumber: 'everyone',
+                email: 'contacts',
                 profilePhoto: 'everyone',
                 lastSeen: 'everyone',
                 forwardMessages: 'everyone'
@@ -147,14 +143,12 @@ app.post('/api/auth/register', async (req, res) => {
         db.users.set(userId, user);
         saveData();
         
-        // В реальном приложении здесь была бы отправка SMS
-        console.log(`📱 Код подтверждения для ${phone}: ${verificationCode}`);
+        console.log(`📧 Новый пользователь зарегистрирован: ${email}`);
         
         res.json({ 
             success: true, 
-            userId, 
-            message: 'Код отправлен',
-            debugCode: verificationCode // Только для демонстрации
+            userId,
+            message: 'Регистрация успешна'
         });
     } catch (error) {
         console.error('Ошибка регистрации:', error);
@@ -162,29 +156,38 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-// Проверка кода подтверждения
-app.post('/api/auth/verify', (req, res) => {
+// ВХОД (Email + Password)
+app.post('/api/auth/login', async (req, res) => {
     try {
-        const { userId, code } = req.body;
+        const { email, password } = req.body;
         
-        const user = db.users.get(userId);
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email и пароль обязательны' });
+        }
+        
+        // Поиск пользователя по email
+        let user = null;
+        for (const [id, userData] of db.users) {
+            if (userData.email === email) {
+                user = userData;
+                break;
+            }
+        }
+        
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
         
-        if (user.verificationCode !== code) {
-            return res.status(400).json({ error: 'Неверный код' });
-        }
-        
-        if (Date.now() > user.verificationCodeExpiry) {
-            return res.status(400).json({ error: 'Код истек' });
+        // Проверка пароля
+        if (!verifyPassword(password, user.password)) {
+            return res.status(400).json({ error: 'Неверный пароль' });
         }
         
         // Генерация токена сессии
         const sessionId = uuidv4();
         const session = {
             id: sessionId,
-            userId,
+            userId: user.id,
             device: req.headers['user-agent'] || 'Unknown',
             ip: req.ip || 'Unknown',
             createdAt: Date.now(),
@@ -193,10 +196,9 @@ app.post('/api/auth/verify', (req, res) => {
         
         db.sessions.set(sessionId, session);
         
-        // Очистка кода подтверждения
-        user.verificationCode = null;
-        user.verificationCodeExpiry = null;
-        db.users.set(userId, user);
+        // Обновление lastSeen
+        user.lastSeen = Date.now();
+        db.users.set(user.id, user);
         saveData();
         
         res.json({
@@ -204,55 +206,88 @@ app.post('/api/auth/verify', (req, res) => {
             sessionId,
             user: {
                 id: user.id,
-                username: user.username,
-                phone: user.phone,
+                name: user.name,
+                email: user.email,
                 twoFAEnabled: user.twoFAEnabled
             }
         });
     } catch (error) {
-        console.error('Ошибка верификации:', error);
+        console.error('Ошибка входа:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
 
-// Вход с паролем 2FA
-app.post('/api/auth/2fa', (req, res) => {
+// Восстановление пароля
+app.post('/api/auth/recover', async (req, res) => {
     try {
-        const { userId, password } = req.body;
+        const { email } = req.body;
         
-        const user = db.users.get(userId);
-        if (!user || !user.twoFAEnabled) {
-            return res.status(400).json({ error: '2FA не включена' });
+        if (!email) {
+            return res.status(400).json({ error: 'Email обязателен' });
         }
         
-        if (!verifyPassword(password, user.twoFAPassword)) {
-            return res.status(400).json({ error: 'Неверный пароль' });
-        }
-        
-        const sessionId = uuidv4();
-        const session = {
-            id: sessionId,
-            userId,
-            device: req.headers['user-agent'] || 'Unknown',
-            ip: req.ip || 'Unknown',
-            createdAt: Date.now(),
-            lastActive: Date.now()
-        };
-        
-        db.sessions.set(sessionId, session);
-        saveData();
-        
-        res.json({
-            success: true,
-            sessionId,
-            user: {
-                id: user.id,
-                username: user.username,
-                phone: user.phone
+        // Поиск пользователя
+        let user = null;
+        for (const [id, userData] of db.users) {
+            if (userData.email === email) {
+                user = userData;
+                break;
             }
+        }
+        
+        if (!user) {
+            // Не показываем существует ли пользователь (безопасность)
+            return res.json({ success: true, message: 'Если email зарегистрирован, инструкция отправлена' });
+        }
+        
+        // В реальном приложении здесь была бы отправка email
+        const resetToken = uuidv4();
+        console.log(`📧 Токен сброса пароля для ${email}: ${resetToken}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Если email зарегистрирован, инструкция отправлена',
+            debugToken: resetToken // Только для демонстрации
         });
     } catch (error) {
-        console.error('Ошибка 2FA:', error);
+        console.error('Ошибка восстановления:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Смена пароля
+app.post('/api/auth/change-password', async (req, res) => {
+    try {
+        const { userId, sessionId, currentPassword, newPassword } = req.body;
+        
+        // Проверка сессии
+        const session = db.sessions.get(sessionId);
+        if (!session || session.userId !== userId) {
+            return res.status(401).json({ error: 'Неавторизован' });
+        }
+        
+        const user = db.users.get(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+        
+        // Проверка текущего пароля
+        if (!verifyPassword(currentPassword, user.password)) {
+            return res.status(400).json({ error: 'Неверный текущий пароль' });
+        }
+        
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'Новый пароль должен быть минимум 6 символов' });
+        }
+        
+        // Обновление пароля
+        user.password = hashPassword(newPassword);
+        db.users.set(userId, user);
+        saveData();
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Ошибка смены пароля:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
@@ -285,8 +320,8 @@ app.get('/api/user/profile/:userId', (req, res) => {
         
         res.json({
             id: user.id,
-            username: user.username,
-            phone: user.phone,
+            name: user.name,
+            email: user.email,
             profile: user.profile,
             settings: user.settings,
             privacy: user.privacy,
@@ -427,6 +462,17 @@ app.delete('/api/user/session/:sessionId', (req, res) => {
 app.delete('/api/user/account/:userId', (req, res) => {
     try {
         const userId = req.params.userId;
+        const { password } = req.body;
+        
+        const user = db.users.get(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+        
+        // Проверка пароля
+        if (!verifyPassword(password, user.password)) {
+            return res.status(400).json({ error: 'Неверный пароль' });
+        }
         
         // Удаление всех сеансов пользователя
         for (const [sessionId, session] of db.sessions) {
@@ -453,13 +499,11 @@ app.delete('/api/user/account/:userId', (req, res) => {
 // SOCKET.IO REAL-TIME COMMUNICATION
 // ==========================================
 
-// Хранение подключенных пользователей
 const connectedUsers = new Map();
 
 io.on('connection', (socket) => {
     console.log(`🔌 Пользователь подключился: ${socket.id}`);
     
-    // Авторизация пользователя
     socket.on('auth', (data) => {
         const { userId, sessionId } = data;
         
@@ -475,10 +519,8 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // Сохранение подключения
         connectedUsers.set(socket.id, { userId, sessionId, user });
         
-        // Обновление статуса пользователя
         user.lastSeen = Date.now();
         db.users.set(userId, user);
         saveData();
@@ -486,23 +528,21 @@ io.on('connection', (socket) => {
         socket.emit('auth_success', {
             user: {
                 id: user.id,
-                username: user.username,
-                phone: user.phone,
+                name: user.name,
+                email: user.email,
                 profile: user.profile
             }
         });
         
-        // Уведомление контактов о статусе онлайн
         socket.broadcast.emit('user_status', {
             userId,
             status: 'online',
             lastSeen: Date.now()
         });
         
-        console.log(`✅ Пользователь авторизован: ${user.username}`);
+        console.log(`✅ Пользователь авторизован: ${user.name}`);
     });
     
-    // Отправка сообщения
     socket.on('send_message', (data) => {
         const { chatId, text, type = 'text' } = data;
         const connection = connectedUsers.get(socket.id);
@@ -514,7 +554,6 @@ io.on('connection', (socket) => {
         
         const { userId, user } = connection;
         
-        // Создание сообщения
         const messageId = uuidv4();
         const message = {
             id: messageId,
@@ -527,26 +566,23 @@ io.on('connection', (socket) => {
             read: false
         };
         
-        // Сохранение сообщения
         if (!db.messages.has(chatId)) {
             db.messages.set(chatId, []);
         }
         db.messages.get(chatId).push(message);
         saveData();
         
-        // Отправка всем участникам чата
         io.emit('new_message', {
             chatId,
             message: {
                 ...message,
                 sender: {
                     id: user.id,
-                    username: user.username
+                    name: user.name
                 }
             }
         });
         
-        // Обновление последнего сообщения в чате
         if (db.chats.has(chatId)) {
             const chat = db.chats.get(chatId);
             chat.lastMessage = text;
@@ -558,7 +594,6 @@ io.on('connection', (socket) => {
         console.log(`📤 Сообщение отправлено: ${messageId}`);
     });
     
-    // Статус набора текста
     socket.on('typing', (data) => {
         const { chatId, isTyping } = data;
         const connection = connectedUsers.get(socket.id);
@@ -568,12 +603,11 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('user_typing', {
             chatId,
             userId: connection.userId,
-            username: connection.user.username,
+            username: connection.user.name,
             isTyping
         });
     });
     
-    // Прочтение сообщений
     socket.on('mark_read', (data) => {
         const { chatId, messageIds } = data;
         const connection = connectedUsers.get(socket.id);
@@ -599,7 +633,6 @@ io.on('connection', (socket) => {
         });
     });
     
-    // Статус онлайн/офлайн
     socket.on('set_status', (data) => {
         const { status } = data;
         const connection = connectedUsers.get(socket.id);
@@ -620,7 +653,6 @@ io.on('connection', (socket) => {
         });
     });
     
-    // Отключение
     socket.on('disconnect', () => {
         const connection = connectedUsers.get(socket.id);
         
@@ -644,7 +676,6 @@ io.on('connection', (socket) => {
         console.log(`🔌 Пользователь отключился: ${socket.id}`);
     });
     
-    // Ошибка
     socket.on('error', (error) => {
         console.error('Socket error:', error);
     });
@@ -672,7 +703,6 @@ server.listen(PORT, () => {
     console.log('╚════════════════════════════════════════════════════╝');
 });
 
-// Обработка незавершенных процессов
 process.on('SIGTERM', () => {
     console.log('\n🛑 Сервер останавливается...');
     saveData();
